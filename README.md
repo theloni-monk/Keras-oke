@@ -18,12 +18,6 @@ pip install spleeter
 pip install git+https://github.com/openai/whisper.git 
 ```
 
-* Chars2Vec
-
-```bash
-pip install chars2vec
-```
-
 for correct dependency versions, make sure you have CUDA >= 11.1 and run
 
 ```bash
