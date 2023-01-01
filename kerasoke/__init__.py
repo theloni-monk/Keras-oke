@@ -1,1 +1,1 @@
-from kerasoke import *
+from .kerasoke import *

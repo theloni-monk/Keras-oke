@@ -41,7 +41,7 @@ def generate_transcript(whisper_model, c2v_model, audio_target: Union[str, np.nd
         seg_embedding = c2v_model.vectorize_words(seg_words) # sequence of vectors of dimension 50
         # compute embedding distance between sequences in the lyric and the estimate sequence
         correlation = []
-        for i in range(lyric_idx, len(lyrics) - num_words):
+        for i in range(lyric_idx, len(lyrics) - num_words): #TODO: shorten this search range
             embedding_distance = np.linalg.norm(lyrics_embedding[i:i+num_words] - seg_embedding)
             correlation.append(embedding_distance)
         correlation = [max(correlation) - i for i in correlation]
@@ -57,11 +57,12 @@ def generate_transcript(whisper_model, c2v_model, audio_target: Union[str, np.nd
 
         lyric_idx+=num_words
 
+    #FIXME: introducing timing errors
     for i in range(0,len(target_locs)-1):
         script_segment = whisper_transcript.script[i]
         prev_target_loc = target_locs[i]
         target_loc = target_locs[i+1]
-        target_lyrics = " ".join(lyrics[prev_target_loc:target_loc]) #TODO: don't use script_segment length as a reference for how many words
+        target_lyrics = " ".join(lyrics[prev_target_loc:target_loc])
         matched_transcript.script.append(transcript_element(script_segment.start, script_segment.end, target_lyrics))
     final_seg =  whisper_transcript.script[-1]
     matched_transcript.script.append(transcript_element(final_seg.start, final_seg.end, " ".join(lyrics[target_locs[-1]:len(lyrics)])))
