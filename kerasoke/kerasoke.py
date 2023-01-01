@@ -4,8 +4,9 @@ import re
 from typing import Union, TextIO
 import numpy as np
 
-import whisper
 import chars2vec
+import whisper
+
 
 @dataclass 
 class transcript_element:
@@ -17,9 +18,12 @@ class transcript_element:
 class transcription:
     script: list[transcript_element]
 
+#WRITEME: wrap spleeter api to extract vocals
+
 def generate_transcript(whisper_model, c2v_model, audio_target: Union[str, np.ndarray], transcript_prior: str):
     whisper_output = whisper.transcribe(whisper_model, audio_target)
-    whisper_transcript = transcription([transcript_element(seg['start'], seg['end'], seg['text']) for seg in whisper_output])
+    
+    whisper_transcript = transcription([transcript_element(seg['start'], seg['end'], seg['text']) for seg in whisper_output['segments']])
 
     lyrics = transcript_prior.strip("(),")
     lyrics = re.split(' |\n|, ', lyrics)
@@ -30,7 +34,7 @@ def generate_transcript(whisper_model, c2v_model, audio_target: Union[str, np.nd
     lyric_idx = 0
     target_locs = []
     for script_segment in whisper_transcript.script:
-        seg_words = script_segment[2].strip()
+        seg_words = script_segment.phrase.strip()
         seg_words = ''.join([i for i in seg_words if i.isalpha() or i == ' ']).split(' ')
         num_words = len(seg_words)
 
@@ -64,12 +68,14 @@ def generate_transcript(whisper_model, c2v_model, audio_target: Union[str, np.nd
 
     # filter out empty phrases
     i = 0
-    while i < len(matched_transcript):
+    while i < len(matched_transcript.script):
         if matched_transcript.script[i].phrase == [] or matched_transcript.script[i].phrase == ['']:
             temp = matched_transcript.pop(i)
             matched_transcript[i-1][1] = temp[1]
         else: 
             i+=1
+    return matched_transcript
+
 def format_timestamp(seconds: float, always_include_hours: bool = False, decimal_marker: str = '.'):
     assert seconds >= 0, "non-negative timestamp expected"
     milliseconds = round(seconds * 1000.0)
@@ -110,8 +116,27 @@ def write_srt(transcript: transcription, file: TextIO):
             flush=True,
         )
 
+
+instructions = """Generates .vtt closed captioning file given an audio file and its lyrics
+Syntax: kerasoke audio_path.mp3 lyrics_path.txt out_path.vtt"""
+
 if __name__ == "__main__":
-    #WRITEME: cli takes wav/mp3 file path for audio and txt file path for lyric prior
     whisper_model  = whisper.load_model("base.en")
     c2v_model = chars2vec.load_model('eng_50')
 
+    if sys.argv[1] == "-h":
+        print(instructions)
+        exit(0)
+
+    audio_path = sys.argv[1]
+    prior_path = sys.argv[2]
+
+    print("Processing", audio_path, "with prior", prior_path)
+
+    out_path = sys.argv[3]
+    with open(prior_path,"r") as lyric_file, open(out_path, "w") as outfile:
+        lyrics = lyric_file.read()
+        captions = generate_transcript(whisper_model, c2v_model, audio_path, lyrics)
+        
+        print("writing captions to", out_path)
+        write_vtt(captions, outfile)
