@@ -1,6 +1,6 @@
 # Keras-oke
 
-## a pipeline for generating karaoke videos via Automatic Speech Recongnition inference
+## Exploring a pipeline for generating karaoke videos via Automatic Speech Recongnition inference
 
 ----------
 
@@ -11,14 +11,22 @@
 ```bash
 pip install spleeter 
 ```
+for aeneas pipeline:
+* Aeneas
+```bash
+sudo apt-get install libespeak-dev
+pip install numpy
+pip install aeneas
+```
 
-* OpenAI whisper
+
+for whisper pipeline(deprecated): OpenAI whisper
 
 ```bash
 pip install git+https://github.com/openai/whisper.git 
 ```
 
-for correct dependency versions, make sure you have CUDA >= 11.1 and run
+for correct whisper dependency versions, make sure you have CUDA >= 11.1 and run
 
 ```bash
 pip install torchvision==0.11.0+cu113 torchaudio==0.10.0 -f https://download.pytorch.org/whl/torch_stable.html
